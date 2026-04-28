@@ -308,17 +308,17 @@
   <div class="header-logo">
     <div>
       <h1>Calmart · Galpão Drop</h1>
-      <p>Cod. 9000 · Ago/25 → Mar/26</p>
+      <p>Ago/25 → Mar/26</p>
     </div>
   </div>
-  <span class="badge">Galpão Drop</span>
+
 </header>
 
 <div class="metrics">
   <div class="card"><div class="card-label">Total de itens</div><div class="card-val">8.363</div><div class="card-sub">8 meses consolidados</div></div>
   <div class="card"><div class="card-label">Receita total</div><div class="card-val">R$ 147k</div><div class="card-sub">Ago/25 → Mar/26</div></div>
   <div class="card"><div class="card-label">Média mensal de peças</div><div class="card-val">1.045</div><div class="card-sub">média 8 meses</div></div>
-  <div class="card"><div class="card-label">Média mensal 2026</div><div class="card-val">1.538</div><div class="card-sub">média Jan+Fev+Mar/26</div></div>
+  <div class="card"><div class="card-label">Média mensal de peças 2026</div><div class="card-val">1.538</div><div class="card-sub">média Jan+Fev+Mar/26</div></div>
 
 </div>
 
@@ -415,6 +415,27 @@ const baseOpts = {
   }
 };
 
+Chart.register({
+  id: 'barLabels',
+  afterDatasetsDraw(chart) {
+    const { ctx, data } = chart;
+    chart.data.datasets.forEach((ds, di) => {
+      const meta = chart.getDatasetMeta(di);
+      meta.data.forEach((bar, i) => {
+        const val = ds.data[i];
+        const label = val >= 1000 ? Math.round(val/1000) + 'k' : 'R$' + Math.round(val);
+        ctx.save();
+        ctx.font = '500 11px "DM Mono", monospace';
+        ctx.fillStyle = '#e6edf3';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(label, bar.x, bar.y - 4);
+        ctx.restore();
+      });
+    });
+  }
+});
+
 new Chart(document.getElementById('c1'), {
   type: 'bar',
   data: {
@@ -424,7 +445,8 @@ new Chart(document.getElementById('c1'), {
       borderRadius: 4, borderSkipped: false }]
   },
   options: { ...baseOpts,
-    plugins: { legend:{display:false}, tooltip:{callbacks:{label:ctx=>' R$ '+ctx.raw.toLocaleString('pt-BR',{minimumFractionDigits:2})}} },
+    layout: { padding: { top: 24 } },
+    plugins: { legend:{display:false}, barLabels:{}, tooltip:{callbacks:{label:ctx=>' R$ '+ctx.raw.toLocaleString('pt-BR',{minimumFractionDigits:2})}} },
     scales: { ...baseOpts.scales, y: { ...baseOpts.scales.y, ticks: { ...baseOpts.scales.y.ticks, callback: v => 'R$'+(v/1000).toFixed(0)+'k' } } }
   }
 });
