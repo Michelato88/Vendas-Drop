@@ -418,12 +418,13 @@ const baseOpts = {
 Chart.register({
   id: 'barLabels',
   afterDatasetsDraw(chart) {
+    if (chart.canvas.id !== 'c1') return;
     const { ctx, data } = chart;
     chart.data.datasets.forEach((ds, di) => {
       const meta = chart.getDatasetMeta(di);
       meta.data.forEach((bar, i) => {
         const val = ds.data[i];
-        const label = val >= 1000 ? Math.round(val/1000) + 'k' : 'R$' + Math.round(val);
+        const label = val >= 1000 ? Math.round(val/1000) + 'k' : Math.round(val).toLocaleString('pt-BR');
         ctx.save();
         ctx.font = '500 11px "DM Mono", monospace';
         ctx.fillStyle = '#e6edf3';
@@ -460,8 +461,34 @@ new Chart(document.getElementById('c2'), {
       borderWidth: 2, pointRadius: 5, pointBackgroundColor: '#0099FF', fill: true, tension: 0.3 }]
   },
   options: { ...baseOpts,
-    plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>' '+ctx.raw.toLocaleString('pt-BR')+' un.'}} },
+    layout: { padding: { top: 24 } },
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{label:ctx=>' '+ctx.raw.toLocaleString('pt-BR')+' un.'}},
+      pointLabels: {}
+    },
     scales:{ ...baseOpts.scales, y:{ ...baseOpts.scales.y, beginAtZero:true } }
+  }
+});
+
+Chart.register({
+  id: 'pointLabels',
+  afterDatasetsDraw(chart) {
+    if (chart.canvas.id !== 'c2') return;
+    const { ctx } = chart;
+    chart.data.datasets.forEach((ds, di) => {
+      const meta = chart.getDatasetMeta(di);
+      meta.data.forEach((pt, i) => {
+        const val = ds.data[i];
+        ctx.save();
+        ctx.font = '500 11px "DM Mono", monospace';
+        ctx.fillStyle = '#e6edf3';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(val.toLocaleString('pt-BR'), pt.x, pt.y - 8);
+        ctx.restore();
+      });
+    });
   }
 });
 
