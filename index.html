@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatório de Vendas — Galpão Drop</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #000000;
+    --surface: #0a0a0a;
+    --surface2: #111111;
+    --border:  rgba(255,255,255,0.08);
+    --border-accent: #0099FF;
+    --text:    #FFFFFF;
+    --muted:   #7d8590;
+    --accent:  #0099FF;
+    --accent2: #63BDDB;
+    --font:    'DM Sans', Arial, sans-serif;
+    --mono:    'DM Mono', 'Courier New', monospace;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem;
+  }
+
+  header {
+    border-bottom: 2px solid var(--border-accent);
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .header-logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .logo-icon {
+    width: 44px;
+    height: 44px;
+    background: var(--bg);
+    border: 2px solid #FFFFFF;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .logo-icon .y {
+    font-family: var(--font);
+    font-weight: 900;
+    font-size: 22px;
+    color: #FFFFFF;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  .logo-icon .dot {
+    position: absolute;
+    bottom: 5px;
+    left: 5px;
+    width: 4px;
+    height: 4px;
+    background: #FFFFFF;
+    border-radius: 50%;
+  }
+
+  header h1 {
+    font-size: 1.1rem;
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  header p {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 4px;
+    font-family: var(--mono);
+    letter-spacing: 1px;
+  }
+
+  .badge {
+    font-size: 0.65rem;
+    font-family: var(--mono);
+    color: var(--accent);
+    background: rgba(0,153,255,0.10);
+    border: 1px solid rgba(0,153,255,0.30);
+    padding: 4px 12px;
+    border-radius: 2px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    margin-bottom: 2rem;
+    border: 1px solid var(--border);
+  }
+
+  .card {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 1.25rem 1.5rem;
+  }
+
+  .card:last-child { border-right: none; }
+
+  .card-label {
+    font-size: 0.65rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-family: var(--mono);
+    margin-bottom: 8px;
+  }
+
+  .card-val {
+    font-size: 1.8rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .card-sub {
+    font-size: 0.68rem;
+    color: var(--muted);
+    margin-top: 4px;
+    font-family: var(--mono);
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    margin-bottom: 2px;
+  }
+
+  .grid-full { margin-bottom: 2px; }
+
+  .chart-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1.25rem 1.5rem;
+  }
+
+  .chart-box h2 {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 2px;
+  }
+
+  .chart-box p {
+    font-size: 0.68rem;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-bottom: 1rem;
+  }
+
+  .canvas-wrap { position: relative; width: 100%; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 10px;
+    font-size: 0.68rem;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  .legend span { display: flex; align-items: center; gap: 5px; }
+
+  .legend i {
+    width: 9px; height: 9px;
+    border-radius: 2px;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  .hmap-wrap { overflow-x: auto; margin-top: 4px; }
+
+  table.hmap {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.72rem;
+    font-family: var(--mono);
+  }
+
+  table.hmap th {
+    font-weight: 400;
+    color: var(--muted);
+    padding: 6px 8px;
+    text-align: center;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+    letter-spacing: 1px;
+  }
+
+  table.hmap th.sku-col { text-align: left; min-width: 80px; }
+  table.hmap td { padding: 3px; text-align: center; }
+
+  table.hmap td.sku-label {
+    text-align: left;
+    padding: 0 10px 0 0;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    letter-spacing: 1px;
+  }
+
+  table.hmap td.total-col {
+    font-weight: 700;
+    color: var(--accent);
+    padding-left: 10px;
+    font-family: var(--mono);
+  }
+
+  table.hmap tr.total-row td {
+    color: var(--muted);
+    font-size: 0.68rem;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .cell-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    border-radius: 2px;
+    font-weight: 500;
+    min-width: 52px;
+  }
+
+  .donut-row { display: flex; align-items: center; gap: 2rem; }
+
+  .donut-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    font-size: 0.72rem;
+    font-family: var(--mono);
+  }
+
+  .donut-legend-item { display: flex; align-items: center; gap: 8px; }
+
+  .donut-legend-item i {
+    width: 9px; height: 9px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .donut-legend-item .lname { color: var(--text); font-weight: 700; min-width: 70px; letter-spacing: 1px; }
+  .donut-legend-item .lpct  { color: var(--accent); }
+
+  .grad-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 0.65rem;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  .grad-bar {
+    width: 100px;
+    height: 6px;
+    background: linear-gradient(to right, #0a1a2a, #0099FF);
+  }
+
+  footer {
+    margin-top: 2px;
+    border-top: 2px solid var(--border-accent);
+    padding-top: 1rem;
+    font-size: 0.65rem;
+    color: var(--muted);
+    font-family: var(--mono);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-logo">
+    <div>
+      <h1>Calmart · Galpão Drop</h1>
+      <p>Cod. 9000 · Ago/25 → Mar/26</p>
+    </div>
+  </div>
+  <span class="badge">Galpão Drop</span>
+</header>
+
+<div class="metrics">
+  <div class="card"><div class="card-label">Total de itens</div><div class="card-val">8.363</div><div class="card-sub">8 meses consolidados</div></div>
+  <div class="card"><div class="card-label">Receita total</div><div class="card-val">R$ 147k</div><div class="card-sub">Ago/25 → Mar/26</div></div>
+  <div class="card"><div class="card-label">Média mensal de peças</div><div class="card-val">1.045</div><div class="card-sub">média 8 meses</div></div>
+  <div class="card"><div class="card-label">Média mensal 2026</div><div class="card-val">1.538</div><div class="card-sub">média Jan+Fev+Mar/26</div></div>
+
+</div>
+
+<div class="grid-2">
+  <div class="chart-box">
+    <h2>Receita mensal (R$)</h2>
+    <p>Valor total de custo faturado por mês</p>
+    <div class="canvas-wrap" style="height:220px">
+      <canvas id="c1"></canvas>
+    </div>
+  </div>
+  <div class="chart-box">
+    <h2>Volume de itens por mês</h2>
+    <p>Quantidade total de unidades</p>
+    <div class="canvas-wrap" style="height:220px">
+      <canvas id="c2"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="grid-full">
+  <div class="chart-box">
+    <h2>Quantidade por SKU × mês — heatmap</h2>
+    <p>Intensidade de cor = volume de unidades · quanto mais escuro, maior o volume</p>
+    <div class="hmap-wrap">
+      <table class="hmap" id="hmap"></table>
+    </div>
+    <div class="grad-row">
+      <span>Baixo</span>
+      <div class="grad-bar"></div>
+      <span>Alto</span>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="chart-box">
+    <h2>Mix de SKU — participação no volume total</h2>
+    <p>Proporção acumulada de unidades por variante</p>
+    <div class="donut-row">
+      <div class="canvas-wrap" style="width:200px;height:200px;flex-shrink:0">
+        <canvas id="c4"></canvas>
+      </div>
+      <div class="donut-legend" id="leg4"></div>
+    </div>
+  </div>
+  <div class="chart-box">
+    <h2>Receita acumulada por SKU (R$)</h2>
+    <p>Total por variante no período</p>
+    <div class="canvas-wrap" style="height:200px">
+      <canvas id="c5"></canvas>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span>Gerado em: <script>document.write(new Date().toLocaleDateString('pt-BR'))</script></span>
+  <span>Calmart º PAC | Comercial</span>
+</footer>
+
+<script>
+const meses = ['Ago/25','Set/25','Out/25','Nov/25','Dez/25','Jan/26','Fev/26','Mar/26'];
+const receita = [1344.12, 2970.94, 12668.50, 15230.64, 14679.88, 35703.30, 31167.40, 33401.80];
+const volume  = [174, 266, 577, 1412, 1320, 1623, 1369, 1622];
+
+const skus = ['GD','MD','PQ','GG','EXG','Passaflex'];
+const skuColors = ['#0099FF','#63BDDB','#FFFFFF','#7d8590','#E6E7E8','#3366CC'];
+const skuData = {
+  'GD':        [129, 19, 224, 302, 308, 401, 409, 627],
+  'MD':        [20,  61, 99,  244, 246, 389, 359, 259],
+  'PQ':        [13,  33, 86,  204, 183, 311, 310, 148],
+  'GG':        [12,  37, 95,  278, 254, 358, 326, 262],
+  'EXG':       [0,   25, 73,  199, 254, 252, 305, 197],
+  'Passaflex': [0,   56, 0,   121, 75,  108, 107, 129],
+};
+const skuValor = {
+  'GD':        [2574.64, 378.86, 4468.74, 6023.14, 6143.76, 7995.94, 8151.24, 12502.62],
+  'MD':        [398.80, 1216.34, 1974.06, 4866.14, 4903.38, 7762.36, 7161.20, 5167.70],
+  'PQ':        [259.34, 657.90, 1714.58, 4067.14, 3649.94, 6200.26, 6175.40, 2950.18],
+  'GG':        [239.28, 737.78, 1894.14, 5544.56, 5061.26, 7139.08, 6498.74, 5221.24],
+  'EXG':       [0, 497.80, 1454.88, 3969.98, 5063.88, 5025.08, 6079.90, 3928.02],
+  'Passaflex': [0, 2166.60, 0, 4677.42, 2900.70, 4180.50, 4140.40, 4993.20],
+};
+
+const gridC = 'rgba(255,255,255,0.06)';
+const textC = '#7d8590';
+
+const baseOpts = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { grid: { color: gridC }, ticks: { color: textC, font: { size: 10, family: "'DM Mono'" }, autoSkip: false, maxRotation: 0 } },
+    y: { grid: { color: gridC }, ticks: { color: textC, font: { size: 10, family: "'DM Mono'" } } }
+  }
+};
+
+new Chart(document.getElementById('c1'), {
+  type: 'bar',
+  data: {
+    labels: meses,
+    datasets: [{ label: 'Receita', data: receita,
+      backgroundColor: meses.map((_,i) => i >= 5 ? '#0099FF' : '#3366CC'),
+      borderRadius: 4, borderSkipped: false }]
+  },
+  options: { ...baseOpts,
+    plugins: { legend:{display:false}, tooltip:{callbacks:{label:ctx=>' R$ '+ctx.raw.toLocaleString('pt-BR',{minimumFractionDigits:2})}} },
+    scales: { ...baseOpts.scales, y: { ...baseOpts.scales.y, ticks: { ...baseOpts.scales.y.ticks, callback: v => 'R$'+(v/1000).toFixed(0)+'k' } } }
+  }
+});
+
+new Chart(document.getElementById('c2'), {
+  type: 'line',
+  data: {
+    labels: meses,
+    datasets: [{ label: 'Unidades', data: volume,
+      borderColor: '#0099FF', backgroundColor: 'rgba(0,153,255,0.10)',
+      borderWidth: 2, pointRadius: 5, pointBackgroundColor: '#0099FF', fill: true, tension: 0.3 }]
+  },
+  options: { ...baseOpts,
+    plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>' '+ctx.raw.toLocaleString('pt-BR')+' un.'}} },
+    scales:{ ...baseOpts.scales, y:{ ...baseOpts.scales.y, beginAtZero:true } }
+  }
+});
+
+// HEATMAP
+const allVals = skus.flatMap(s => skuData[s]);
+const maxVal = Math.max(...allVals);
+
+function cellBg(val) {
+  if (val === 0) return '#0a0a0a';
+  const t = Math.pow(val / maxVal, 0.55);
+  const r = Math.round(0  + (0  -0)*t);
+  const g = Math.round(10 + (153-10)*t);
+  const b = Math.round(30 + (255-30)*t);
+  return `rgb(${r},${g},${b})`;
+}
+function cellTxt(val) {
+  if (val === 0) return '#2a2a2a';
+  const t = Math.pow(val / maxVal, 0.55);
+  return t > 0.50 ? '#FFFFFF' : '#63BDDB';
+}
+
+const rowTotals = skus.map(s => skuData[s].reduce((a,b)=>a+b,0));
+const colTotals = meses.map((_,mi) => skus.reduce((a,s)=>a+skuData[s][mi],0));
+const grandTotal = rowTotals.reduce((a,b)=>a+b,0);
+
+const tbl = document.getElementById('hmap');
+let html = '<thead><tr><th class="sku-col">SKU</th>';
+meses.forEach(m => { html += `<th>${m}</th>`; });
+html += '<th style="color:#1D9E75">Total</th></tr></thead><tbody>';
+
+skus.forEach((s,si) => {
+  html += `<tr><td class="sku-label">${s}</td>`;
+  meses.forEach((_,mi) => {
+    const v = skuData[s][mi];
+    html += `<td style="padding:3px"><div class="cell-inner" style="background:${cellBg(v)};color:${cellTxt(v)}">${v>0?v.toLocaleString('pt-BR'):'—'}</div></td>`;
+  });
+  html += `<td class="total-col">${rowTotals[si].toLocaleString('pt-BR')}</td></tr>`;
+});
+
+html += '<tr class="total-row"><td class="sku-label" style="color:#7d8590;padding-top:8px">Total</td>';
+colTotals.forEach(v => { html += `<td style="text-align:center;padding-top:8px;font-family:var(--mono)">${v.toLocaleString('pt-BR')}</td>`; });
+html += `<td class="total-col">${grandTotal.toLocaleString('pt-BR')}</td></tr>`;
+html += '</tbody>';
+tbl.innerHTML = html;
+
+// DONUT
+const totalPorSku = skus.map(s => skuData[s].reduce((a,b)=>a+b,0));
+const totalGeral = totalPorSku.reduce((a,b)=>a+b,0);
+const leg4 = document.getElementById('leg4');
+skus.forEach((s,i) => {
+  const pct = Math.round((totalPorSku[i]/totalGeral)*100);
+  leg4.innerHTML += `<div class="donut-legend-item"><i style="background:${skuColors[i]}"></i><span class="lname">${s}</span><span class="lpct">${pct}%</span></div>`;
+});
+
+new Chart(document.getElementById('c4'), {
+  type: 'doughnut',
+  data: { labels: skus, datasets: [{ data: totalPorSku, backgroundColor: skuColors, borderWidth: 2, borderColor: '#000000' }] },
+  options: { responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw} un. (${Math.round((ctx.raw/totalGeral)*100)}%)`}} },
+    cutout:'65%'
+  }
+});
+
+// BARRA HORIZONTAL — Receita acumulada por SKU
+const receitaPorSku = skus.map(s => skuValor[s].reduce((a,b)=>a+b,0));
+new Chart(document.getElementById('c5'), {
+  type: 'bar',
+  data: {
+    labels: skus,
+    datasets: [{ label: 'Receita', data: receitaPorSku, backgroundColor: skuColors, borderRadius: 4, borderSkipped: false }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend:{display:false}, tooltip:{callbacks:{label:ctx=>' R$ '+ctx.raw.toLocaleString('pt-BR',{minimumFractionDigits:2})}} },
+    scales: {
+      x: { grid:{color: gridC}, ticks:{color:textC, font:{size:10,family:"'DM Mono'"}, callback:v=>'R$'+(v/1000).toFixed(0)+'k'} },
+      y: { grid:{display:false}, ticks:{color:'#e6edf3', font:{size:11,family:"'DM Mono'",weight:'500'}} }
+    }
+  }
+});
+</script>
+</body>
+</html>
